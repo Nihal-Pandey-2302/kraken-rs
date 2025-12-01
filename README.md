@@ -27,9 +27,9 @@ This ensures a consistent environment and proves the SDK is deployment-ready.
 - **Checksum Validation**: Mathematically verifies OrderBook integrity using CRC32.
 - **Event Broadcasting**: Efficient `tokio::broadcast` channel for multiple listeners.
 - **Command Channel**: Thread-safe `mpsc` channel for dynamic subscriptions.
-  \*\*: Subscribe and unsubscribe from channels at runtime.
+- **Dynamic Control**: Subscribe and unsubscribe from channels at runtime.
 - **Order Book Management**: Handles both initial snapshots and incremental updates seamlessly.
-- **Resilient**: (Coming Soon) Automatic reconnection and subscription restoration.
+- **Resilient**: Automatic reconnection and subscription restoration.
 
 ## 📦 Installation
 
@@ -53,29 +53,35 @@ cargo run --example 01_basic_subscribe
 
 We provide several examples to get you started:
 
+### 🟢 Basics
+
 - **[01_basic_subscribe.rs](examples/01_basic_subscribe.rs)**: Simple trade subscription.
+- **[04_multi_pair.rs](examples/04_multi_pair.rs)**: Subscribes to multiple pairs (BTC, ETH, SOL, XRP).
+- **[06_reconnect_demo.rs](examples/06_reconnect_demo.rs)**: Demonstrates the auto-reconnection logic.
+
+### 🟡 Advanced
+
 - **[02_orderbook_tracker.rs](examples/02_orderbook_tracker.rs)**: Tracks the full order book (snapshot + updates).
 - **[03_trade_monitor.rs](examples/03_trade_monitor.rs)**: Monitors trades and alerts on "whale" transactions.
-- **[04_multi_pair.rs](examples/04_multi_pair.rs)**: Subscribes to multiple pairs (BTC, ETH, SOL, XRP).
 - **[05_custom_handler.rs](examples/05_custom_handler.rs)**: Shows how to handle different event types manually.
-- **[06_reconnect_demo.rs](examples/06_reconnect_demo.rs)**: Demonstrates the auto-reconnection logic.
-- **[07_terminal_ui.rs](examples/07_terminal_ui.rs)**: **GRANDMASTER DEMO**. A full TUI trading terminal.
 
-### 8. `08_ohlc_candles.rs`
+### 🔴 Grandmaster Demos
 
-Real-time aggregation of trades into OHLCV candles (Open, High, Low, Close, Volume).
+- **[07_terminal_ui.rs](examples/07_terminal_ui.rs)**: **The "Pro" Terminal**. Full TUI with Charts, Sparklines, and Analytics.
+- **[08_ohlc_candles.rs](examples/08_ohlc_candles.rs)**: Real-time aggregation of trades into OHLCV candles.
+- **[09_private_feed.rs](examples/09_private_feed.rs)**: Authenticated subscription to private data (HMAC-SHA512).
 
-### 9. `09_private_feed.rs`
+## 🛡️ Resiliency & Error Handling
 
-Authenticated subscription to private data (e.g., `ownTrades`) using your API Key/Secret.
-
-## 🛡️ Resiliency & Error Handlings built for production. It includes:
+This SDK is built for production. It includes:
 
 - **Auto-Reconnection**: If the WebSocket drops, it automatically retries with exponential backoff.
 - **State Restoration**: Upon reconnection, it automatically re-subscribes to all previously active channels.
 - **Error Handling**: Robust parsing that doesn't crash on unexpected messages.
 
 ## 🏗️ Architecture
+
+### High-Level Data Flow
 
 ```mermaid
 graph TD
@@ -99,6 +105,8 @@ graph TD
     Book --> Checksum
     Checksum --> Loop
 ```
+
+### Internal Component Architecture
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
@@ -180,10 +188,13 @@ This will open comprehensive rustdoc documentation for all public types and meth
 
 ## 🏆 Why this SDK?
 
-- **Performance- **📊 Real-Time Analytics**: Built-in `TradeAggregator` for OHLCV candles with **SMA-10** and **Price Charts\*\*.
+- **Performance**: **~648k msgs/sec** (Benchmarked).
+- **📊 Real-Time Analytics**: Built-in `TradeAggregator` for OHLCV candles with **SMA-10** and **Price Charts**.
 - **🔐 Private Data**: Authenticated subscriptions (`ownTrades`) using HMAC-SHA512 signing.
 - **🖥️ Pro Terminal UI**: Interactive TUI with **Sparklines**, **Liquidity Meters**, **Whale Alerts**, and **Timeframe Toggles (10s/30s/60s)**.
 - **⚡ Zero-Copy Parsing**: Custom `serde` deserializers for maximum throughput.
+- **Ergonomics**: No more dealing with `serde_json::Value` arrays manually.
+- **Correctness**: Handles Kraken's specific quirks (e.g., "as"/"bs" for snapshots vs "a"/"b" for updates).
 
 ## 🎨 Terminal UI Showcase
 
@@ -194,9 +205,6 @@ This will open comprehensive rustdoc documentation for all public types and meth
 ### Analytics Tab
 
 ![Analytics Tab](screenshots/analytics_tab.png)
-
-- **Ergonomics**: No more dealing with `serde_json::Value` arrays manually.
-- **Correctness**: Handles Kraken's specific quirks (e.g., "as"/"bs" for snapshots vs "a"/"b" for updates).
 
 ## 📄 License
 
