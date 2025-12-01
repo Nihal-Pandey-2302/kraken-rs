@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  kraken-tui:
+    build: .
+    tty: true      # Essential for TUI
+    stdin_open: true # Essential for TUI interaction
+    environment:
+      - RUST_LOG=info
