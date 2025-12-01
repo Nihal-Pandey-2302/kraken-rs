@@ -21,7 +21,7 @@ This ensures a consistent environment and proves the SDK is deployment-ready.
 - **Auto-Reconnection**: Automatically detects disconnects and re-subscribes.
 - **Grandmaster TUI**: A full-featured Terminal User Interface for live trading visualization.
 
-  ![TUI Demo](https://via.placeholder.com/800x400?text=Grandmaster+TUI+Demo)
+  ![TUI Demo](screenshots/market_tab.png)
   _(Run `cargo run --example 07_terminal_ui` to see it live)_
 
 - **Checksum Validation**: Mathematically verifies OrderBook integrity using CRC32.
