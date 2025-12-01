@@ -1,6 +1,6 @@
-use kraken_sdk::{KrakenClient, auth::Authenticator};
-use std::env;
 use dotenvy::dotenv;
+use kraken_sdk::{auth::Authenticator, KrakenClient};
+use std::env;
 use std::error::Error;
 
 #[tokio::main]
@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // 3. Connect and Subscribe
     let client = KrakenClient::new();
     let mut rx = client.subscribe_events();
-    
+
     client.connect().await?;
 
     // Subscribe to "ownTrades" (Private Channel)

@@ -1,13 +1,13 @@
 use eyre::Result;
-use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
-use futures_util::{StreamExt, SinkExt};
-use tracing::{info, error, warn};
-use tokio::sync::{broadcast, mpsc};
+use futures_util::{SinkExt, StreamExt};
 use serde::Serialize;
+use tokio::sync::{broadcast, mpsc};
+use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
+use tracing::{error, info, warn};
 
-pub mod models;
 pub mod aggregator;
 pub mod auth;
+pub mod models;
 use models::KrakenEvent;
 
 #[derive(Debug, Clone)]
@@ -30,7 +30,13 @@ pub struct KrakenClient {
     event_sender: broadcast::Sender<KrakenEvent>,
     command_sender: mpsc::Sender<Command>,
     // We store the receiver in an Option so we can take it out once when connecting
-    command_receiver: std::sync::Mutex<Option<mpsc::Receiver<Command>>>, 
+    command_receiver: std::sync::Mutex<Option<mpsc::Receiver<Command>>>,
+}
+
+impl Default for KrakenClient {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl KrakenClient {
@@ -72,15 +78,23 @@ impl KrakenClient {
     /// client.subscribe(vec!["XBT/USD".to_string()], "trade", None).await.unwrap();
     /// # }
     /// ```
-    pub async fn subscribe(&self, pairs: Vec<String>, name: &str, token: Option<String>) -> Result<()> {
+    pub async fn subscribe(
+        &self,
+        pairs: Vec<String>,
+        name: &str,
+        token: Option<String>,
+    ) -> Result<()> {
         let cmd = Command::Subscribe {
             pairs,
-            subscription: SubscriptionArgs { 
+            subscription: SubscriptionArgs {
                 name: name.to_string(),
                 token,
             },
         };
-        self.command_sender.send(cmd).await.map_err(|e| eyre::eyre!("Failed to send command: {}", e))?;
+        self.command_sender
+            .send(cmd)
+            .await
+            .map_err(|e| eyre::eyre!("Failed to send command: {}", e))?;
         Ok(())
     }
 
@@ -97,17 +111,21 @@ impl KrakenClient {
     /// Returns an error if the client has already connected (the command receiver is taken).
     pub async fn connect(&self) -> Result<()> {
         info!("Starting Kraken Client...");
-        
+
         // Take the command receiver
-        let mut command_receiver = self.command_receiver.lock().unwrap().take()
+        let mut command_receiver = self
+            .command_receiver
+            .lock()
+            .unwrap()
+            .take()
             .ok_or_else(|| eyre::eyre!("Client already connected (receiver taken)"))?;
 
         let ws_url = self.ws_url.clone();
         let event_sender = self.event_sender.clone();
-        
+
         // State to track active subscriptions for re-subscribing
         // We use a simple list of commands that we've sent.
-        // In a real app, we might want to be smarter (e.g. remove unsubscribes), 
+        // In a real app, we might want to be smarter (e.g. remove unsubscribes),
         // but for now, replaying the "Subscribe" commands is sufficient.
         let mut active_subscriptions: Vec<Command> = Vec::new();
 
@@ -131,16 +149,19 @@ impl KrakenClient {
 
                 // Re-send active subscriptions
                 for cmd in &active_subscriptions {
-                    let Command::Subscribe { pairs, subscription } = cmd;
+                    let Command::Subscribe {
+                        pairs,
+                        subscription,
+                    } = cmd;
                     let msg = serde_json::json!({
                         "event": "subscribe",
                         "pair": pairs,
                         "subscription": subscription
                     });
                     if let Err(e) = write.send(Message::Text(msg.to_string())).await {
-                            error!("Failed to resubscribe: {}", e);
-                            // If we can't send, the connection is likely dead, break to outer loop
-                            break; 
+                        error!("Failed to resubscribe: {}", e);
+                        // If we can't send, the connection is likely dead, break to outer loop
+                        break;
                     }
                     info!("Resubscribed to {:?}", pairs);
                 }
@@ -186,7 +207,7 @@ impl KrakenClient {
                                                 break; // Connection likely dead
                                             }
                                             info!("Sent subscription for {:?}", pairs);
-                                            
+
                                             // Add to active subscriptions
                                             active_subscriptions.push(cmd);
                                         }
@@ -200,7 +221,7 @@ impl KrakenClient {
                         }
                     }
                 }
-                
+
                 // If we broke the inner loop, wait a bit before reconnecting
                 tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
             }

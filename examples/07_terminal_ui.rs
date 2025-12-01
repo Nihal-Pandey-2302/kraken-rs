@@ -5,12 +5,23 @@ use crossterm::{
 };
 use ratatui::{
     prelude::*,
-    widgets::{Block, Borders, Cell, Paragraph, Row, Table, Sparkline, Gauge, Chart, Dataset, Axis, GraphType},
     symbols,
+    widgets::{
+        Axis, Block, Borders, Cell, Chart, Dataset, Gauge, GraphType, Paragraph, Row, Sparkline,
+        Table,
+    },
 };
-use std::{error::Error, io, time::{Duration, Instant}};
+use std::{
+    error::Error,
+    io,
+    time::{Duration, Instant},
+};
 
-use kraken_sdk::{models::{LocalOrderBook, Candle}, KrakenClient, aggregator::TradeAggregator};
+use kraken_sdk::{
+    aggregator::TradeAggregator,
+    models::{Candle, LocalOrderBook},
+    KrakenClient,
+};
 
 struct TradeInfo {
     time: String,
@@ -55,16 +66,22 @@ impl App {
         // Bids are sorted High -> Low (Best bid is first)
         // Note: LocalOrderBook stores strings in BTreeMap.
         // We need to find the best ask and best bid.
-        
+
         // Since BTreeMap sorts strings lexicographically, we need to be careful.
         // However, for this demo, we'll iterate and parse to find true best.
         // Optimization: Cache this or use a better data structure in production.
-        
-        let best_ask = self.local_book.asks.keys()
+
+        let best_ask = self
+            .local_book
+            .asks
+            .keys()
             .filter_map(|p| p.parse::<f64>().ok())
             .fold(f64::MAX, |a, b| a.min(b));
-            
-        let best_bid = self.local_book.bids.keys()
+
+        let best_bid = self
+            .local_book
+            .bids
+            .keys()
             .filter_map(|p| p.parse::<f64>().ok())
             .fold(f64::MIN, |a, b| a.max(b));
 
@@ -72,7 +89,10 @@ impl App {
             return (0.0, 0.0);
         }
 
-        (best_ask - best_bid, (best_ask - best_bid) / best_ask * 100.0)
+        (
+            best_ask - best_bid,
+            (best_ask - best_bid) / best_ask * 100.0,
+        )
     }
 }
 
@@ -91,14 +111,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Setup Kraken Client
     let client = KrakenClient::new();
     let mut rx = client.subscribe_events();
-    
+
     // Connect and subscribe
     app.status = "Connecting to Kraken WS...".to_string();
     terminal.draw(|f| ui(f, &app))?; // Draw once to show status
 
     client.connect().await?;
-    client.subscribe(vec!["XBT/USD".to_string()], "trade", None).await?;
-    client.subscribe(vec!["XBT/USD".to_string()], "book", None).await?;
+    client
+        .subscribe(vec!["XBT/USD".to_string()], "trade", None)
+        .await?;
+    client
+        .subscribe(vec!["XBT/USD".to_string()], "book", None)
+        .await?;
     app.status = "Connected. Streaming XBT/USD...".to_string();
 
     // TUI Loop
@@ -147,7 +171,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                                 // Update Stats
                                 app.msg_count += 1;
-                                app.last_latency = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis() - (t.time.parse::<f64>().unwrap_or(0.0) * 1000.0) as u128;
+                                app.last_latency = std::time::SystemTime::now()
+                                    .duration_since(std::time::UNIX_EPOCH)
+                                    .unwrap()
+                                    .as_millis()
+                                    - (t.time.parse::<f64>().unwrap_or(0.0) * 1000.0) as u128;
 
                                 // Update Price History (Sparkline)
                                 let price = t.price.parse::<f64>().unwrap_or(0.0);
@@ -177,7 +205,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         }
                     }
                     Err(tokio::sync::broadcast::error::TryRecvError::Empty) => break,
-                    Err(_) => break, 
+                    Err(_) => break,
                 }
             }
             last_tick = std::time::Instant::now();
@@ -186,10 +214,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // Restore terminal
     disable_raw_mode()?;
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-    )?;
+    execute!(terminal.backend_mut(), LeaveAlternateScreen,)?;
     terminal.show_cursor()?;
 
     Ok(())
@@ -216,14 +241,26 @@ fn ui(f: &mut Frame, app: &App) {
 
     let header_chunks = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(30), Constraint::Percentage(40), Constraint::Percentage(30)])
+        .constraints([
+            Constraint::Percentage(30),
+            Constraint::Percentage(40),
+            Constraint::Percentage(30),
+        ])
         .split(chunks[0]);
 
     let title = Paragraph::new("🐙 KRAKEN SDK TERMINAL")
-        .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
+        .style(
+            Style::default()
+                .fg(Color::Cyan)
+                .add_modifier(Modifier::BOLD),
+        )
         .block(Block::default().borders(Borders::ALL));
-    
-    let status_color = if app.status.contains("Connected") { Color::Green } else { Color::Yellow };
+
+    let status_color = if app.status.contains("Connected") {
+        Color::Green
+    } else {
+        Color::Yellow
+    };
     let status = Paragraph::new(app.status.as_str())
         .style(Style::default().fg(status_color))
         .block(Block::default().borders(Borders::ALL).title("Status"));
@@ -242,10 +279,20 @@ fn ui(f: &mut Frame, app: &App) {
     // Let's put it in the "Spread" chunk for now, or create a new row.
     // Actually, let's just put it in the middle chunk (Status) but make it small.
     let sparkline = Sparkline::default()
-        .block(Block::default().title("Price History").borders(Borders::NONE))
+        .block(
+            Block::default()
+                .title("Price History")
+                .borders(Borders::NONE),
+        )
         .data(&app.price_history)
         .style(Style::default().fg(Color::Yellow));
-    f.render_widget(sparkline, header_chunks[1].inner(Margin { vertical: 1, horizontal: 1 }));
+    f.render_widget(
+        sparkline,
+        header_chunks[1].inner(Margin {
+            vertical: 1,
+            horizontal: 1,
+        }),
+    );
 
     // --- Tab Content ---
     match app.selected_tab {
@@ -256,14 +303,17 @@ fn ui(f: &mut Frame, app: &App) {
 
     // --- Footer ---
     let elapsed = app.start_time.elapsed().as_secs_f64();
-    let msg_rate = if elapsed > 0.0 { app.msg_count as f64 / elapsed } else { 0.0 };
-    
+    let msg_rate = if elapsed > 0.0 {
+        app.msg_count as f64 / elapsed
+    } else {
+        0.0
+    };
+
     let footer_text = format!(
         "Controls: [q] Quit | [1] Market | [2] Analytics | [3] 10s [4] 30s [5] 60s | Latency: {}ms | Msgs/sec: {:.0}", 
         app.last_latency, msg_rate
     );
-    let footer = Paragraph::new(footer_text)
-        .style(Style::default().fg(Color::DarkGray));
+    let footer = Paragraph::new(footer_text).style(Style::default().fg(Color::DarkGray));
     f.render_widget(footer, chunks[2]);
 }
 
@@ -280,17 +330,39 @@ fn render_market_tab(f: &mut Frame, app: &App, area: Rect) {
         .split(main_chunks[0]);
 
     // Liquidity Meter (Top of Orderbook)
-    let total_bid_vol: f64 = app.local_book.bids.values().filter_map(|v| v.parse::<f64>().ok()).sum();
-    let total_ask_vol: f64 = app.local_book.asks.values().filter_map(|v| v.parse::<f64>().ok()).sum();
+    let total_bid_vol: f64 = app
+        .local_book
+        .bids
+        .values()
+        .filter_map(|v| v.parse::<f64>().ok())
+        .sum();
+    let total_ask_vol: f64 = app
+        .local_book
+        .asks
+        .values()
+        .filter_map(|v| v.parse::<f64>().ok())
+        .sum();
     let total_vol = total_bid_vol + total_ask_vol;
-    let bid_ratio = if total_vol > 0.0 { total_bid_vol / total_vol } else { 0.5 };
+    let bid_ratio = if total_vol > 0.0 {
+        total_bid_vol / total_vol
+    } else {
+        0.5
+    };
 
     let gauge = Gauge::default()
-        .block(Block::default().title("Liquidity Imbalance").borders(Borders::ALL))
+        .block(
+            Block::default()
+                .title("Liquidity Imbalance")
+                .borders(Borders::ALL),
+        )
         .gauge_style(Style::default().fg(Color::Green).bg(Color::Red))
         .ratio(bid_ratio)
-        .label(format!("{:.0}% Bids / {:.0}% Asks", bid_ratio * 100.0, (1.0 - bid_ratio) * 100.0));
-    
+        .label(format!(
+            "{:.0}% Bids / {:.0}% Asks",
+            bid_ratio * 100.0,
+            (1.0 - bid_ratio) * 100.0
+        ));
+
     let book_layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Length(3), Constraint::Min(0)])
@@ -303,7 +375,7 @@ fn render_market_tab(f: &mut Frame, app: &App, area: Rect) {
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
         .split(book_layout[1]);
-    
+
     // ... (Use inner_book_chunks instead of book_chunks for tables)
 
     // Prepare Bids (Green) - Sorted High to Low
@@ -323,52 +395,102 @@ fn render_market_tab(f: &mut Frame, app: &App, area: Rect) {
     });
 
     // Render Bids
-    let bid_rows: Vec<Row> = bids.iter().take(25).map(|(p, v)| {
-        let vol = v.parse::<f64>().unwrap_or(0.0);
-        let bar = create_volume_bar(vol, 10.0, 10); // Assume max vol 10 for bar scaling
-        Row::new(vec![
-            Cell::from(format!("{}", p)).style(Style::default().fg(Color::Green)),
-            Cell::from(v.as_str()),
-            Cell::from(bar).style(Style::default().fg(Color::DarkGray)),
-        ])
-    }).collect();
+    let bid_rows: Vec<Row> = bids
+        .iter()
+        .take(25)
+        .map(|(p, v)| {
+            let vol = v.parse::<f64>().unwrap_or(0.0);
+            let bar = create_volume_bar(vol, 10.0, 10); // Assume max vol 10 for bar scaling
+            Row::new(vec![
+                Cell::from(format!("{}", p)).style(Style::default().fg(Color::Green)),
+                Cell::from(v.as_str()),
+                Cell::from(bar).style(Style::default().fg(Color::DarkGray)),
+            ])
+        })
+        .collect();
 
-    let bids_table = Table::new(bid_rows, [Constraint::Length(10), Constraint::Length(10), Constraint::Length(10)])
-        .header(Row::new(vec!["Price", "Vol", "Depth"]).style(Style::default().add_modifier(Modifier::UNDERLINED)))
-        .block(Block::default().borders(Borders::ALL).title("Bids (Buy)"));
-    
+    let bids_table = Table::new(
+        bid_rows,
+        [
+            Constraint::Length(10),
+            Constraint::Length(10),
+            Constraint::Length(10),
+        ],
+    )
+    .header(
+        Row::new(vec!["Price", "Vol", "Depth"])
+            .style(Style::default().add_modifier(Modifier::UNDERLINED)),
+    )
+    .block(Block::default().borders(Borders::ALL).title("Bids (Buy)"));
+
     f.render_widget(bids_table, inner_book_chunks[0]);
 
     // Render Asks
-    let ask_rows: Vec<Row> = asks.iter().take(25).map(|(p, v)| {
-        let vol = v.parse::<f64>().unwrap_or(0.0);
-        let bar = create_volume_bar(vol, 10.0, 10);
-        Row::new(vec![
-            Cell::from(format!("{}", p)).style(Style::default().fg(Color::Red)),
-            Cell::from(v.as_str()),
-            Cell::from(bar).style(Style::default().fg(Color::DarkGray)),
-        ])
-    }).collect();
+    let ask_rows: Vec<Row> = asks
+        .iter()
+        .take(25)
+        .map(|(p, v)| {
+            let vol = v.parse::<f64>().unwrap_or(0.0);
+            let bar = create_volume_bar(vol, 10.0, 10);
+            Row::new(vec![
+                Cell::from(format!("{}", p)).style(Style::default().fg(Color::Red)),
+                Cell::from(v.as_str()),
+                Cell::from(bar).style(Style::default().fg(Color::DarkGray)),
+            ])
+        })
+        .collect();
 
-    let asks_table = Table::new(ask_rows, [Constraint::Length(10), Constraint::Length(10), Constraint::Length(10)])
-        .header(Row::new(vec!["Price", "Vol", "Depth"]).style(Style::default().add_modifier(Modifier::UNDERLINED)))
-        .block(Block::default().borders(Borders::ALL).title("Asks (Sell)"));
+    let asks_table = Table::new(
+        ask_rows,
+        [
+            Constraint::Length(10),
+            Constraint::Length(10),
+            Constraint::Length(10),
+        ],
+    )
+    .header(
+        Row::new(vec!["Price", "Vol", "Depth"])
+            .style(Style::default().add_modifier(Modifier::UNDERLINED)),
+    )
+    .block(Block::default().borders(Borders::ALL).title("Asks (Sell)"));
 
     f.render_widget(asks_table, inner_book_chunks[1]);
 
     // Trades (Right)
-    let trade_rows: Vec<Row> = app.trades.iter().map(|t| {
-        let color = if t.side == "b" { Color::Green } else { Color::Red };
-        Row::new(vec![
-            Cell::from(t.time.as_str()),
-            Cell::from(t.price.as_str()).style(Style::default().fg(color)),
-            Cell::from(t.volume.as_str()),
-        ])
-    }).collect();
+    let trade_rows: Vec<Row> = app
+        .trades
+        .iter()
+        .map(|t| {
+            let color = if t.side == "b" {
+                Color::Green
+            } else {
+                Color::Red
+            };
+            Row::new(vec![
+                Cell::from(t.time.as_str()),
+                Cell::from(t.price.as_str()).style(Style::default().fg(color)),
+                Cell::from(t.volume.as_str()),
+            ])
+        })
+        .collect();
 
-    let trades_table = Table::new(trade_rows, [Constraint::Length(15), Constraint::Length(10), Constraint::Length(10)])
-        .header(Row::new(vec!["Time", "Price", "Vol"]).style(Style::default().add_modifier(Modifier::UNDERLINED)))
-        .block(Block::default().borders(Borders::ALL).title("Recent Trades"));
+    let trades_table = Table::new(
+        trade_rows,
+        [
+            Constraint::Length(15),
+            Constraint::Length(10),
+            Constraint::Length(10),
+        ],
+    )
+    .header(
+        Row::new(vec!["Time", "Price", "Vol"])
+            .style(Style::default().add_modifier(Modifier::UNDERLINED)),
+    )
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .title("Recent Trades"),
+    );
 
     f.render_widget(trades_table, main_chunks[1]);
 }
@@ -380,44 +502,66 @@ fn render_analytics_tab(f: &mut Frame, app: &App, area: Rect) {
         .split(area);
 
     // --- Chart (Top) ---
-    let candle_data: Vec<(f64, f64)> = app.candles.iter().rev().enumerate().map(|(i, c)| (i as f64, c.close)).collect();
-    
-    let datasets = vec![
-        Dataset::default()
-            .name("Price")
-            .marker(symbols::Marker::Braille)
-            .graph_type(GraphType::Line)
-            .style(Style::default().fg(Color::Cyan))
-            .data(&candle_data),
-    ];
-    
+    let candle_data: Vec<(f64, f64)> = app
+        .candles
+        .iter()
+        .rev()
+        .enumerate()
+        .map(|(i, c)| (i as f64, c.close))
+        .collect();
+
+    let datasets = vec![Dataset::default()
+        .name("Price")
+        .marker(symbols::Marker::Braille)
+        .graph_type(GraphType::Line)
+        .style(Style::default().fg(Color::Cyan))
+        .data(&candle_data)];
+
     // Calculate Y-Axis bounds
-    let min_price = app.candles.iter().map(|c| c.low).fold(f64::MAX, |a, b| a.min(b));
-    let max_price = app.candles.iter().map(|c| c.high).fold(f64::MIN, |a, b| a.max(b));
-    let y_min = if min_price == f64::MAX { 0.0 } else { min_price * 0.9999 }; // Zoom in
-    let y_max = if max_price == f64::MIN { 100.0 } else { max_price * 1.0001 };
+    let min_price = app
+        .candles
+        .iter()
+        .map(|c| c.low)
+        .fold(f64::MAX, |a, b| a.min(b));
+    let max_price = app
+        .candles
+        .iter()
+        .map(|c| c.high)
+        .fold(f64::MIN, |a, b| a.max(b));
+    let y_min = if min_price == f64::MAX {
+        0.0
+    } else {
+        min_price * 0.9999
+    }; // Zoom in
+    let y_max = if max_price == f64::MIN {
+        100.0
+    } else {
+        max_price * 1.0001
+    };
 
     let chart = Chart::new(datasets)
         .block(Block::default().title("Price Chart").borders(Borders::ALL))
-        .x_axis(Axis::default()
-            .title("Time")
-            .style(Style::default().fg(Color::Gray))
-            .bounds([0.0, app.candles.len() as f64])
-            .labels(vec![Span::raw("Old"), Span::raw("New")]))
-        .y_axis(Axis::default()
-            .title("Price")
-            .style(Style::default().fg(Color::Gray))
-            .bounds([y_min, y_max])
-            .labels(vec![
-                Span::raw(format!("{:.0}", y_min)),
-                Span::raw(format!("{:.0}", y_max)),
-            ]));
-    
+        .x_axis(
+            Axis::default()
+                .title("Time")
+                .style(Style::default().fg(Color::Gray))
+                .bounds([0.0, app.candles.len() as f64])
+                .labels(vec![Span::raw("Old"), Span::raw("New")]),
+        )
+        .y_axis(
+            Axis::default()
+                .title("Price")
+                .style(Style::default().fg(Color::Gray))
+                .bounds([y_min, y_max])
+                .labels(vec![
+                    Span::raw(format!("{:.0}", y_min)),
+                    Span::raw(format!("{:.0}", y_max)),
+                ]),
+        );
+
     f.render_widget(chart, chunks[0]);
 
     // --- Table (Bottom) ---
-
-
 
     // Calculate SMA-10
     // Simple moving average of Close price
@@ -425,42 +569,71 @@ fn render_analytics_tab(f: &mut Frame, app: &App, area: Rect) {
     let window = 10;
     for i in 0..app.candles.len() {
         if i + window <= app.candles.len() {
-            let sum: f64 = app.candles[i..i+window].iter().map(|c| c.close).sum();
+            let sum: f64 = app.candles[i..i + window].iter().map(|c| c.close).sum();
             sma_values.push(sum / window as f64);
         } else {
             sma_values.push(0.0); // Not enough data
         }
     }
 
-    let candle_rows: Vec<Row> = app.candles.iter().enumerate().map(|(i, c)| {
-        let color = if c.close >= c.open { Color::Green } else { Color::Red };
-        let sma = if sma_values[i] > 0.0 { format!("{:.2}", sma_values[i]) } else { "-".to_string() };
-        let trend = if c.close >= c.open { "███" } else { "███" };
-        
-        Row::new(vec![
-            Cell::from(c.start_time.to_string()),
-            Cell::from(format!("{:.2}", c.open)),
-            Cell::from(format!("{:.2}", c.high)),
-            Cell::from(format!("{:.2}", c.low)),
-            Cell::from(format!("{:.2}", c.close)).style(Style::default().fg(color)),
-            Cell::from(format!("{:.4}", c.volume)),
-            Cell::from(sma).style(Style::default().fg(Color::Yellow)),
-            Cell::from(trend).style(Style::default().fg(color)),
-        ])
-    }).collect();
+    let candle_rows: Vec<Row> = app
+        .candles
+        .iter()
+        .enumerate()
+        .map(|(i, c)| {
+            let color = if c.close >= c.open {
+                Color::Green
+            } else {
+                Color::Red
+            };
+            let sma = if sma_values[i] > 0.0 {
+                format!("{:.2}", sma_values[i])
+            } else {
+                "-".to_string()
+            };
+            let trend = if c.close >= c.open {
+                "███"
+            } else {
+                "███"
+            };
 
-    let table = Table::new(candle_rows, [
-        Constraint::Length(15), 
-        Constraint::Length(10), 
-        Constraint::Length(10), 
-        Constraint::Length(10), 
-        Constraint::Length(10), 
-        Constraint::Length(10),
-        Constraint::Length(10),
-        Constraint::Length(5)
-    ])
-    .header(Row::new(vec!["Time", "Open", "High", "Low", "Close", "Volume", "SMA-10", "Trend"]).style(Style::default().add_modifier(Modifier::UNDERLINED)))
-    .block(Block::default().borders(Borders::ALL).title("OHLCV Candles"));
+            Row::new(vec![
+                Cell::from(c.start_time.to_string()),
+                Cell::from(format!("{:.2}", c.open)),
+                Cell::from(format!("{:.2}", c.high)),
+                Cell::from(format!("{:.2}", c.low)),
+                Cell::from(format!("{:.2}", c.close)).style(Style::default().fg(color)),
+                Cell::from(format!("{:.4}", c.volume)),
+                Cell::from(sma).style(Style::default().fg(Color::Yellow)),
+                Cell::from(trend).style(Style::default().fg(color)),
+            ])
+        })
+        .collect();
+
+    let table = Table::new(
+        candle_rows,
+        [
+            Constraint::Length(15),
+            Constraint::Length(10),
+            Constraint::Length(10),
+            Constraint::Length(10),
+            Constraint::Length(10),
+            Constraint::Length(10),
+            Constraint::Length(10),
+            Constraint::Length(5),
+        ],
+    )
+    .header(
+        Row::new(vec![
+            "Time", "Open", "High", "Low", "Close", "Volume", "SMA-10", "Trend",
+        ])
+        .style(Style::default().add_modifier(Modifier::UNDERLINED)),
+    )
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .title("OHLCV Candles"),
+    );
 
     f.render_widget(table, chunks[1]);
 }
@@ -471,4 +644,3 @@ fn create_volume_bar(volume: f64, max_volume: f64, width: usize) -> String {
     let bar: String = std::iter::repeat("█").take(filled).collect();
     format!("{:<width$}", bar, width = width)
 }
-

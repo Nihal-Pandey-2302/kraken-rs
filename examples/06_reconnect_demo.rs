@@ -1,6 +1,6 @@
-use kraken_sdk::{KrakenClient, models::KrakenEvent};
-use tracing::{info, warn};
+use kraken_sdk::{models::KrakenEvent, KrakenClient};
 use std::time::Duration;
+use tracing::{info, warn};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -9,11 +9,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let client = KrakenClient::new();
     let mut rx = client.subscribe_events();
-    
+
     client.connect().await?;
 
     // Subscribe to a pair
-    client.subscribe(vec!["XBT/USD".to_string()], "trade", None).await?;
+    client
+        .subscribe(vec!["XBT/USD".to_string()], "trade", None)
+        .await?;
 
     // In a real test, you would manually disconnect your internet or kill the WS connection
     // Here we just listen and print, demonstrating that the client stays alive.

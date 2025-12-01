@@ -1,4 +1,4 @@
-use kraken_sdk::{KrakenClient, models::KrakenEvent};
+use kraken_sdk::{models::KrakenEvent, KrakenClient};
 use tracing::info;
 
 #[tokio::main]
@@ -8,11 +8,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let client = KrakenClient::new();
     let mut rx = client.subscribe_events();
-    
+
     client.connect().await?;
 
     // Subscribe to XBT/USD trades
-    client.subscribe(vec!["XBT/USD".to_string()], "trade", None).await?;
+    client
+        .subscribe(vec!["XBT/USD".to_string()], "trade", None)
+        .await?;
 
     while let Ok(event) = rx.recv().await {
         if let Some(trade) = event.try_into_trade_data() {

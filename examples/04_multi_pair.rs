@@ -1,4 +1,4 @@
-use kraken_sdk::{KrakenClient, models::KrakenEvent};
+use kraken_sdk::{models::KrakenEvent, KrakenClient};
 use tracing::info;
 
 #[tokio::main]
@@ -8,7 +8,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let client = KrakenClient::new();
     let mut rx = client.subscribe_events();
-    
+
     client.connect().await?;
 
     // Subscribe to multiple pairs at once
@@ -18,7 +18,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "SOL/USD".to_string(),
         "XRP/USD".to_string(),
     ];
-    
+
     client.subscribe(pairs.clone(), "trade", None).await?;
     info!("Subscribed to: {:?}", pairs);
 

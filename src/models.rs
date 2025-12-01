@@ -1,7 +1,7 @@
+use crc32fast::Hasher;
 use serde::{Deserialize, Deserializer};
 use serde_json::Value;
 use std::collections::BTreeMap;
-use crc32fast::Hasher;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
@@ -27,7 +27,7 @@ pub struct SystemStatus {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct SubscriptionStatus {
-    pub event: String, // "subscriptionStatus"
+    pub event: String,          // "subscriptionStatus"
     pub status: Option<String>, // "subscribed" or "error"
     pub pair: Option<String>,
     pub channel_name: Option<String>,
@@ -55,7 +55,7 @@ pub struct Trade {
     pub price: String,
     pub volume: String,
     pub time: String,
-    pub side: String, // "b" or "s"
+    pub side: String,       // "b" or "s"
     pub order_type: String, // "m" or "l"
     pub misc: String,
 }
@@ -86,7 +86,7 @@ impl<'de> Deserialize<'de> for OrderBookEntry {
     {
         let v: Vec<String> = Deserialize::deserialize(deserializer)?;
         Ok(OrderBookEntry {
-            price: v.get(0).cloned().unwrap_or_default(),
+            price: v.first().cloned().unwrap_or_default(),
             volume: v.get(1).cloned().unwrap_or_default(),
             timestamp: v.get(2).cloned().unwrap_or_default(),
         })
@@ -133,20 +133,20 @@ impl KrakenEvent {
         if let KrakenEvent::Data(mut vec) = self {
             // Format: [channel_id, { "as": ... } OR { "a": ... }, "book-N", pair]
             // Sometimes updates have two objects: [channel_id, {"a":...}, {"b":...}, "book-N", pair]
-            
+
             // Check for "book-" in the channel name
             // The channel name is usually the second to last element, but if there are 2 objects, it shifts.
             // Let's look from the end.
-            
+
             let pair = vec.pop()?.as_str()?.to_string();
             let channel_name = vec.pop()?.as_str()?.to_string();
-            
+
             if !channel_name.starts_with("book") {
                 return None;
             }
 
             let channel_id = vec.remove(0).as_u64()?;
-            
+
             // Remaining elements in vec are the data objects (1 or 2)
             let mut asks = Vec::new();
             let mut bids = Vec::new();
@@ -158,15 +158,21 @@ impl KrakenEvent {
                 // Actually, Kraken sends checksum as a field "c" inside the object usually, OR as a separate string at the end?
                 // Let's check the docs/logs.
                 // Usually: [channelID, {"a": [], "b": [], "c": "1234"}, "book-10", "XBT/USD"]
-                
-                if let Ok(obj) = serde_json::from_value::<serde_json::Map<String, Value>>(value.clone()) {
+
+                if let Ok(obj) =
+                    serde_json::from_value::<serde_json::Map<String, Value>>(value.clone())
+                {
                     if let Some(a_val) = obj.get("a") {
-                        if let Ok(mut list) = serde_json::from_value::<Vec<OrderBookEntry>>(a_val.clone()) {
+                        if let Ok(mut list) =
+                            serde_json::from_value::<Vec<OrderBookEntry>>(a_val.clone())
+                        {
                             asks.append(&mut list);
                         }
                     }
                     if let Some(b_val) = obj.get("b") {
-                        if let Ok(mut list) = serde_json::from_value::<Vec<OrderBookEntry>>(b_val.clone()) {
+                        if let Ok(mut list) =
+                            serde_json::from_value::<Vec<OrderBookEntry>>(b_val.clone())
+                        {
                             bids.append(&mut list);
                         }
                     }
@@ -178,13 +184,17 @@ impl KrakenEvent {
                     }
                     if let Some(as_val) = obj.get("as") {
                         is_snapshot = true;
-                        if let Ok(mut list) = serde_json::from_value::<Vec<OrderBookEntry>>(as_val.clone()) {
+                        if let Ok(mut list) =
+                            serde_json::from_value::<Vec<OrderBookEntry>>(as_val.clone())
+                        {
                             asks.append(&mut list);
                         }
                     }
                     if let Some(bs_val) = obj.get("bs") {
                         is_snapshot = true;
-                        if let Ok(mut list) = serde_json::from_value::<Vec<OrderBookEntry>>(bs_val.clone()) {
+                        if let Ok(mut list) =
+                            serde_json::from_value::<Vec<OrderBookEntry>>(bs_val.clone())
+                        {
                             bids.append(&mut list);
                         }
                     }
@@ -211,7 +221,7 @@ pub struct LocalOrderBook {
     // We use String for precision, but for sorting we might need f64 or custom comparator.
     // Kraken prices are strings. BTreeMap sorts Strings lexicographically, which IS NOT CORRECT for numbers ("10" < "2").
     // We must parse to f64 for sorting keys, or use a custom wrapper.
-    // For simplicity in this hackathon, let's assume standard float parsing is fine for keys, 
+    // For simplicity in this hackathon, let's assume standard float parsing is fine for keys,
     // but we keep the original string for the checksum to avoid float formatting issues.
     // Actually, using a wrapper `OrderedFloat` is best, but we don't want another dep.
     // Let's use a helper to parse key as f64 for the map.
@@ -260,13 +270,13 @@ impl LocalOrderBook {
     /// 3. String = price + volume (decimal points removed)
     pub fn calculate_checksum(&self) -> u32 {
         let mut hasher = Hasher::new();
-        
-        // Asks: Sorted Low to High. 
+
+        // Asks: Sorted Low to High.
         // BTreeMap sorts Strings lexicographically. This is a BUG if prices have different integer lengths (e.g. "100" vs "99").
         // However, for a single pair like XBT/USD, prices are usually same length (5 digits).
         // To be safe, we should really sort by float value.
         // Let's collect and sort properly.
-        
+
         let mut asks: Vec<(&String, &String)> = self.asks.iter().collect();
         asks.sort_by(|a, b| {
             let p1 = a.0.parse::<f64>().unwrap_or(0.0);
@@ -301,7 +311,7 @@ impl LocalOrderBook {
 
         hasher.finalize()
     }
-    
+
     pub fn validate_checksum(&self, remote_checksum: &str) -> bool {
         // Remote checksum is a string of the u32? Or hex?
         // Kraken sends it as a string "123456789".
@@ -321,7 +331,7 @@ impl<'de> Deserialize<'de> for Trade {
     {
         let v: Vec<String> = Deserialize::deserialize(deserializer)?;
         Ok(Trade {
-            price: v.get(0).cloned().unwrap_or_default(),
+            price: v.first().cloned().unwrap_or_default(),
             volume: v.get(1).cloned().unwrap_or_default(),
             time: v.get(2).cloned().unwrap_or_default(),
             side: v.get(3).cloned().unwrap_or_default(),
@@ -330,7 +340,6 @@ impl<'de> Deserialize<'de> for Trade {
         })
     }
 }
-
 
 #[derive(Debug, Clone, Copy)]
 pub struct Candle {

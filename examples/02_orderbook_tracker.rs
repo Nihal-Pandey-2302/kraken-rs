@@ -1,4 +1,4 @@
-use kraken_sdk::{KrakenClient, models::KrakenEvent};
+use kraken_sdk::{models::KrakenEvent, KrakenClient};
 use tracing::info;
 
 #[tokio::main]
@@ -8,18 +8,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let client = KrakenClient::new();
     let mut rx = client.subscribe_events();
-    
+
     client.connect().await?;
 
     // Subscribe to OrderBook
-    client.subscribe(vec!["XBT/USD".to_string()], "book", None).await?;
+    client
+        .subscribe(vec!["XBT/USD".to_string()], "book", None)
+        .await?;
 
     let mut local_book = kraken_sdk::models::LocalOrderBook::new();
 
     while let Ok(event) = rx.recv().await {
         if let Some(book) = event.try_into_orderbook_data() {
             local_book.update(&book);
-            
+
             if let Some(checksum) = book.checksum {
                 if local_book.validate_checksum(&checksum) {
                     info!("✅ Checksum Validated: {}", checksum);
@@ -31,7 +33,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
 
             if book.is_snapshot {
-                info!("SNAPSHOT: {} asks, {} bids", book.asks.len(), book.bids.len());
+                info!(
+                    "SNAPSHOT: {} asks, {} bids",
+                    book.asks.len(),
+                    book.bids.len()
+                );
             } else {
                 info!("UPDATE: {} asks, {} bids", book.asks.len(), book.bids.len());
             }
