@@ -69,7 +69,7 @@ impl KrakenClient {
     /// # use kraken_sdk::KrakenClient;
     /// # async fn example() {
     /// let client = KrakenClient::new();
-    /// client.subscribe(vec!["XBT/USD".to_string()], "trade").await.unwrap();
+    /// client.subscribe(vec!["XBT/USD".to_string()], "trade", None).await.unwrap();
     /// # }
     /// ```
     pub async fn subscribe(&self, pairs: Vec<String>, name: &str, token: Option<String>) -> Result<()> {

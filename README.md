@@ -4,6 +4,7 @@ A high-performance, asynchronous Rust SDK for the Kraken WebSocket API. Built fo
 
 ![Rust](https://img.shields.io/badge/rust-1.70%2B-orange)
 ![License](https://img.shields.io/badge/license-MIT-blue)
+![CI](https://github.com/Nihal-Pandey-2302/kraken-rs/actions/workflows/ci.yml/badge.svg)
 
 ## 🐳 Docker Support
 
@@ -70,6 +71,7 @@ We provide several examples to get you started:
 - **[07_terminal_ui.rs](examples/07_terminal_ui.rs)**: **The "Pro" Terminal**. Full TUI with Charts, Sparklines, and Analytics.
 - **[08_ohlc_candles.rs](examples/08_ohlc_candles.rs)**: Real-time aggregation of trades into OHLCV candles.
 - **[09_private_feed.rs](examples/09_private_feed.rs)**: Authenticated subscription to private data (HMAC-SHA512).
+- **[10_simple_bot.rs](examples/10_simple_bot.rs)**: **Algorithmic Trading**. SMA Crossover strategy implementation.
 
 ## 🛡️ Resiliency & Error Handling
 

@@ -15,8 +15,8 @@ async fn main() -> Result<()> {
     client.connect().await?;
 
     // Dynamic subscription
-    client.subscribe(vec!["XBT/USD".to_string()], "trade").await?;
-    client.subscribe(vec!["XBT/USD".to_string()], "book").await?;
+    client.subscribe(vec!["XBT/USD".to_string()], "trade", None).await?;
+    client.subscribe(vec!["XBT/USD".to_string()], "book", None).await?;
 
     // Consume events
     while let Ok(event) = rx.recv().await {
