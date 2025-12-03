@@ -1,4 +1,4 @@
-use kraken_sdk::{models::KrakenEvent, KrakenClient};
+use kraken_sdk::KrakenClient;
 use tracing::info;
 
 #[tokio::main]

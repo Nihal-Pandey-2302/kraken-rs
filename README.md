@@ -16,6 +16,14 @@ docker compose run --rm kraken-tui
 
 This ensures a consistent environment and proves the SDK is deployment-ready.
 
+## ✅ Verification Script
+
+To run all examples sequentially and verify the entire SDK:
+
+```bash
+./run_all_examples.sh
+```
+
 ## ✨ Features
 
 - **Typed Data Models**: Full Serde support for Kraken's complex JSON arrays.

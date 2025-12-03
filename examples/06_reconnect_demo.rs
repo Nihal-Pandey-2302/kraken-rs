@@ -1,5 +1,5 @@
 use kraken_sdk::{models::KrakenEvent, KrakenClient};
-use std::time::Duration;
+
 use tracing::{info, warn};
 
 #[tokio::main]

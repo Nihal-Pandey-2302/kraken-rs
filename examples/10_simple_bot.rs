@@ -3,6 +3,8 @@ use std::error::Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    tracing_subscriber::fmt::init();
+    
     // 1. Setup Client
     let client = KrakenClient::new();
     let mut rx = client.subscribe_events();
@@ -16,8 +18,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     println!("✅ Connected! Subscribed to XBT/USD trades.");
 
     // 3. Strategy State
-    // We'll use 1-minute candles for this demo
-    let mut aggregator = TradeAggregator::new(60);
+    // We'll use 10-second candles for this demo (faster feedback)
+    let mut aggregator = TradeAggregator::new(10);
     let mut candles = Vec::new();
 
     // SMA Periods
