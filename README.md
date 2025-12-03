@@ -153,20 +153,20 @@ graph TD
 ```text
 ┌─────────────────────────────────────────────────────────────┐
 │                      User Application                       │
-│  (Trading Bot, Dashboard, Indexer, Strategy Engine, etc.)  │
+│  (Trading Bot, Dashboard, Indexer, Strategy Engine, etc.)   │
 └─────────────────────┬───────────────────────────────────────┘
                       │
                       │ client.connect()
                       │ client.subscribe(...)
                       ▼
         ┌─────────────────────────────┐
-        │      KrakenClient            │
-        │   (Public API Facade)        │
-        │                              │
-        │  • connect() -> Self         │
-        │  • subscribe(pairs, channel) │
-        │  • subscribe_events() -> Rx  │
-        └──────────┬──────────┬────────┘
+        │      KrakenClient           │
+        │   (Public API Facade)       │
+        │                             │
+        │  • connect() -> Self        │
+        │  • subscribe(pairs, channel)│
+        │  • subscribe_events() -> Rx │
+        └──────────┬──────────┬───────┘
                    │          │
        ┌───────────┘          └──────────┐
        │                                 │
