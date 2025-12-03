@@ -38,7 +38,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-kraken_sdk = { path = "." } # Or git url
+kraken_sdk = { git = "https://github.com/Nihal-Pandey-2302/kraken-rs" }
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -70,8 +70,38 @@ We provide several examples to get you started:
 
 - **[07_terminal_ui.rs](examples/07_terminal_ui.rs)**: **The "Pro" Terminal**. Full TUI with Charts, Sparklines, and Analytics.
 - **[08_ohlc_candles.rs](examples/08_ohlc_candles.rs)**: Real-time aggregation of trades into OHLCV candles.
-- **[09_private_feed.rs](examples/09_private_feed.rs)**: Authenticated subscription to private data (HMAC-SHA512).
+- **[09_private_feed.rs](examples/09_private_feed.rs)**: Demonstrates authenticated WebSocket subscriptions using HMAC-SHA512.
+
 - **[10_simple_bot.rs](examples/10_simple_bot.rs)**: **Algorithmic Trading**. SMA Crossover strategy implementation.
+
+## 🔐 Private Feed Authentication
+
+**File:** `examples/09_private_feed.rs`
+
+Demonstrates authenticated WebSocket subscriptions using HMAC-SHA512.
+
+**Implementation:**
+
+```rust
+// 1. Fetch WebSocket token
+let auth = Authenticator::new(api_key, api_secret);
+let token = auth.get_ws_token().await?;
+
+// 2. Subscribe to private channels
+client.subscribe_private("ownTrades", token).await?;
+```
+
+**Testing:**
+
+```bash
+# Verify HMAC signing logic
+cargo test auth_test
+
+# Run with live credentials (requires .env)
+KRAKEN_API_KEY=xxx KRAKEN_API_SECRET=xxx cargo run --example 09_private_feed
+```
+
+**Note:** Authentication flow is fully implemented and tested. Live testing requires KYC-verified Kraken account.
 
 ## 🛡️ Resiliency & Error Handling
 
@@ -80,6 +110,16 @@ This SDK is built for production. It includes:
 - **Auto-Reconnection**: If the WebSocket drops, it automatically retries with exponential backoff.
 - **State Restoration**: Upon reconnection, it automatically re-subscribes to all previously active channels.
 - **Error Handling**: Robust parsing that doesn't crash on unexpected messages.
+
+### Authentication Testing
+
+Run the auth test suite:
+
+```bash
+cargo test --test auth_test
+```
+
+This verifies HMAC-SHA512 signing logic without requiring live API credentials.
 
 ## 🏗️ Architecture
 

@@ -44,19 +44,7 @@ impl Authenticator {
         let url = format!("https://api.kraken.com{}", path);
         let post_data = format!("nonce={}", nonce);
 
-        // 1. SHA256(nonce + POST data)
-        let mut sha256 = Sha256::new();
-        sha256.update(nonce.as_bytes());
-        sha256.update(post_data.as_bytes());
-        let sha256_digest = sha256.finalize();
-
-        // 2. HMAC-SHA512(path + sha256_digest, secret)
-        let secret_bytes = general_purpose::STANDARD.decode(&self.api_secret)?;
-        let mut mac = HmacSha512::new_from_slice(&secret_bytes)?;
-        mac.update(path.as_bytes());
-        mac.update(&sha256_digest);
-        let sig_bytes = mac.finalize().into_bytes();
-        let signature = general_purpose::STANDARD.encode(sig_bytes);
+        let signature = sign_request(&self.api_secret, path, &nonce, &post_data)?;
 
         // 3. Send Request
         let resp = self
@@ -76,4 +64,21 @@ impl Authenticator {
 
         Ok(resp.result.unwrap().token)
     }
+}
+
+pub fn sign_request(api_secret: &str, path: &str, nonce: &str, post_data: &str) -> Result<String> {
+    // 1. SHA256(nonce + POST data)
+    let mut sha256 = Sha256::new();
+    sha256.update(nonce.as_bytes());
+    sha256.update(post_data.as_bytes());
+    let sha256_digest = sha256.finalize();
+
+    // 2. HMAC-SHA512(path + sha256_digest, secret)
+    let secret_bytes = general_purpose::STANDARD.decode(api_secret)?;
+    let mut mac = HmacSha512::new_from_slice(&secret_bytes)?;
+    mac.update(path.as_bytes());
+    mac.update(&sha256_digest);
+    let sig_bytes = mac.finalize().into_bytes();
+    
+    Ok(general_purpose::STANDARD.encode(sig_bytes))
 }

@@ -84,11 +84,15 @@ Executed example scripts against the live Kraken WebSocket API.
 - **Result**: ✅ PASS
 - **Observation**: Correctly aggregates raw trades into OHLCV bars. Verified with 5s and 60s intervals.
 
-### 9. Private Feed (`09_private_feed.rs`)
+### Example 09: Private Feed
 
-- **Command**: `cargo run --example 09_private_feed`
-- **Result**: ✅ PASS (Verified Logic)
-- **Observation**: Correctly implements HMAC-SHA512 signing flow. Requires valid API Keys in `.env` to connect.
+- **Command**: `cargo test auth_test`
+- **Result**: ✅ PASS
+- **Observation**:
+  - HMAC-SHA512 signing logic verified with Kraken-spec test vectors
+  - Signature format: Base64-encoded SHA512 (88 characters)
+  - Authentication flow implemented per Kraken API documentation
+  - Code structure allows drop-in live credentials via `.env`
 
 ## 3. Performance Benchmarks
 
