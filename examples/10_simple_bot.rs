@@ -4,7 +4,7 @@ use std::error::Error;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt::init();
-    
+
     // 1. Setup Client
     let client = KrakenClient::new();
     let mut rx = client.subscribe_events();

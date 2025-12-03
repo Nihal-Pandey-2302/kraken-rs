@@ -79,6 +79,6 @@ pub fn sign_request(api_secret: &str, path: &str, nonce: &str, post_data: &str) 
     mac.update(path.as_bytes());
     mac.update(&sha256_digest);
     let sig_bytes = mac.finalize().into_bytes();
-    
+
     Ok(general_purpose::STANDARD.encode(sig_bytes))
 }
