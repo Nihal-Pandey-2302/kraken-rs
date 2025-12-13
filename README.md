@@ -11,7 +11,7 @@ A high-performance, asynchronous Rust SDK for the Kraken WebSocket API. Built fo
 Run the Terminal UI instantly with Docker:
 
 ```bash
-docker compose run --rm kraken-tui
+docker compose run --rm --build kraken-tui
 ```
 
 This ensures a consistent environment and proves the SDK is deployment-ready.
