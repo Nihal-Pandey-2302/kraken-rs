@@ -13,5 +13,5 @@ target/
 .DS_Store
 
 #md 
-.DEMO_SCRIPT.md
-.INTERVIEW_PREP.md
+#md 
+DEMO_SCRIPT.md

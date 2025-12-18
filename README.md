@@ -1,5 +1,8 @@
 # Kraken SDK (Rust)
 
+[![Hackathon Submission](https://img.shields.io/badge/Hackathon-Submission-FFD700?style=for-the-badge)](SUBMISSION.md)
+[![Documentation](https://img.shields.io/badge/Documentation-Live-blue?style=for-the-badge)](https://nihal-pandey-2302.github.io/kraken-rs/kraken_sdk/)
+
 A high-performance, asynchronous Rust SDK for the Kraken WebSocket API. Built for low-latency trading applications, market data ingestion, and algorithmic strategies.
 
 ![Rust](https://img.shields.io/badge/rust-1.70%2B-orange)
