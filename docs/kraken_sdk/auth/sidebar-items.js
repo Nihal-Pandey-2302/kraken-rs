@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["sign_request"],"struct":["Authenticator","TokenResponse","TokenResult"],"type":["HmacSha512"]};

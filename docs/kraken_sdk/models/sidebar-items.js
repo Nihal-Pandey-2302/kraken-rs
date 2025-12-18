@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["KrakenEvent"],"struct":["Candle","Heartbeat","LocalOrderBook","OrderBookData","OrderBookEntry","OrderBookRegion","SubscriptionInfo","SubscriptionStatus","SystemStatus","Trade","TradeData"]};
