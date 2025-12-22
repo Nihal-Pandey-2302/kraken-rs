@@ -13,6 +13,8 @@ A high-performance, asynchronous Rust SDK for the Kraken WebSocket API. Built fo
 
 **The "Grandmaster" Terminal**. We didn't just build a library; we built a full-featured trading dashboard to prove it works.
 
+[![Watch the Demo](https://img.shields.io/badge/Watch_Demo-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/hQP03oT1gkY)
+
 ![Market Tab](screenshots/market_tab.png)
 
 - **Real-time Order Book** with Liquidity Visualization
