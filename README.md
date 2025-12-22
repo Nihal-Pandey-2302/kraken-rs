@@ -53,6 +53,39 @@ kraken_sdk = { git = "https://github.com/Nihal-Pandey-2302/kraken-rs" }
 tokio = { version = "1", features = ["full"] }
 ```
 
+## 📖 Usage Guide
+
+Here is a minimal example of how to use the SDK in your application:
+
+```rust
+use kraken_sdk::KrakenClient;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // 1. Create the client
+    let client = KrakenClient::new();
+    let mut rx = client.subscribe_events();
+
+    // 2. Connect (Spawns the background EventLoop)
+    client.connect().await?;
+
+    // 3. Subscribe to a channel (e.g., "trade" for XBT/USD)
+    client.subscribe(vec!["XBT/USD".to_string()], "trade", None).await?;
+
+    // 4. Process events
+    while let Ok(event) = rx.recv().await {
+        // Events are strictly typed!
+        if let Some(trade_data) = event.try_into_trade_data() {
+            for trade in trade_data.data {
+                println!("Trade: {} @ ${}", trade_data.pair, trade.price);
+            }
+        }
+    }
+
+    Ok(())
+}
+```
+
 ## ⚡ Quick Start
 
 Run the basic example:
