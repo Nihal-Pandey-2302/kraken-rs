@@ -1,3 +1,33 @@
+//! # Kraken SDK
+//!
+//! A high-performance, asynchronous Rust SDK for the Kraken WebSocket API.
+//!
+//! ## ✨ Features
+//!
+//! - **Strictly Typed**: Custom Serde deserializers for Kraken's complex JSON arrays.
+//! - **Resilient**: Automatic reconnection and state restoration.
+//! - **Verified**: CRC32 Checksum implementation for Order Book integrity.
+//! - **Fast**: Benchmarked at ~648k msg/sec.
+//!
+//! ## 🚀 Quick Start
+//!
+//! ```rust,no_run
+//! use kraken_sdk::KrakenClient;
+//!
+//! #[tokio::main]
+//! async fn main() {
+//!     let client = KrakenClient::new();
+//!     let mut rx = client.subscribe_events();
+//!
+//!     client.connect().await.unwrap();
+//!     client.subscribe(vec!["XBT/USD".to_string()], "trade", None).await.unwrap();
+//!
+//!     while let Ok(event) = rx.recv().await {
+//!         println!("Received: {:?}", event);
+//!     }
+//! }
+//! ```
+
 use eyre::Result;
 use futures_util::{SinkExt, StreamExt};
 use serde::Serialize;
