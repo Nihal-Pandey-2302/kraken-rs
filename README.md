@@ -42,6 +42,14 @@ We benchmarked the SDK against a standard Python `json.loads` implementation pro
 
 ## 📦 Installation
 
+**Option A: CLI (Recommended)**
+
+```bash
+cargo add tokio --features full
+cargo add kraken_sdk --git https://github.com/Nihal-Pandey-2302/kraken-rs
+```
+
+**Option B: Manual `Cargo.toml`**
 Add this to your `Cargo.toml`:
 
 ```toml
