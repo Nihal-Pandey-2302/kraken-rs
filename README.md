@@ -15,7 +15,7 @@ A high-performance, asynchronous Rust SDK for the Kraken WebSocket API. Built fo
 
 [![Watch the Demo](https://img.shields.io/badge/Watch_Demo-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/hQP03oT1gkY)
 
-![Market Tab](screenshots/market_tab.png)
+![Market Tab](kraken.gif)
 
 - **Real-time Order Book** with Liquidity Visualization
 - **Live Analytics** (OHLCV Candles & SMA)
