@@ -71,8 +71,7 @@ Throughput and latency numbers were measured under controlled local conditions:
 The focus was not just peak throughput, but predictable behavior under stress and reconnect conditions.
 ---
 ## Architecture Overview
-
-The system is structured as an async event-driven pipeline:
+Async event-driven ingestion pipeline with deterministic ordering, local orderbook reconstruction, and checksum validation.
 
 ![Kraken Ingestion Architecture](https://raw.githubusercontent.com/Nihal-Pandey-2302/kraken-rs/refs/heads/main/screenshots/arch.png)
 
