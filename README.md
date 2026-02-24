@@ -70,32 +70,11 @@ Throughput and latency numbers were measured under controlled local conditions:
 
 The focus was not just peak throughput, but predictable behavior under stress and reconnect conditions.
 ---
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 The system is structured as an async event-driven pipeline:
 
-```mermaid
-graph TD
-    User[User Application] -->|connect/subscribe| Client[KrakenClient]
-    Client -->|Command Channel| Loop[EventLoop]
-    Loop -->|Broadcast Channel| User
-    Loop -->|WebSocket| API[Kraken API]
-
-    subgraph SDK
-        Client
-        Loop
-        subgraph Internals [EventLoop Internals]
-            Parser[Message Parser]
-            Book[LocalOrderBook]
-            Checksum[Checksum Validator]
-        end
-    end
-
-    Loop --- Parser
-    Parser --> Book
-    Book --> Checksum
-    Checksum --> Loop
-```
+![Kraken Ingestion Architecture](https://raw.githubusercontent.com/Nihal-Pandey-2302/kraken-rs/refs/heads/main/screenshots/arch.png)
 
 Key design decisions:
 
